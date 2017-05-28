@@ -109,7 +109,7 @@ impl std::fmt::Display for Board {
 					true => "#",
 					false => "-",
 				}))
-			.fold(String::new(), |mut acc, cur| {
+			.fold(String::with_capacity((self.x + 1) * self.y), |mut acc, cur| {
 				acc.push('\n');
 				acc.extend(cur);
 				acc

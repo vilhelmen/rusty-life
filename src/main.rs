@@ -101,7 +101,7 @@ mod life {
 			}
 		}
 
-		pub fn iterate(&self) {
+		pub fn iterate(&mut self) {
 			let window_offsets: Vec<(isize,isize)> = vec!(
 				(-1,-1), ( 0,-1), ( 1,-1),
 				(-1, 0),          ( 1, 0),
@@ -113,23 +113,43 @@ mod life {
 			// You have to subtract one
 			// How the hell do you use that with offsets like this
 
-			for x_i in 0..self.x {
-				for y_i in 0..self.y {
-					// next[self.coord_map(x_i,y_i)] = 
-					println!("{:?}", window_offsets.iter().map(|&(dx, dy)| x_i.wrapping_add(dx)).collect::<Vec<_>>());
-					/*
-					println!("{:?}",window_offsets.iter().map(|(d_x, d_y)| 
-							match self.coord_map(x_i.wrapping_add(d_x), y_i.wrapping_add(d_y)) {
+			// Rust is the worst.
+			macro_rules! bs_math {
+				($a:expr, $b:expr) => {(
+					if $b < 0 {
+						$a.wrapping_sub((-$b) as usize)
+					} else {
+						$a.wrapping_add($b as usize)
+					}
+				)};
+			}
+
+			// could enumerate and map, but then we'd have to convert 1d => 2d
+			// and that involves modular arithmatic, which is gross
+			let mut current_pos = 0; // save a little time calculating this over and over
+			for yi in 0..self.y {
+				for xi in 0..self.x {
+					next[current_pos] = match window_offsets.iter().map(
+							|&(dx, dy)| match self.coord_map(bs_math!(xi, dx), bs_math!(yi, dy)) {
 								Ok(coord) => match self.data[coord] {
 									true => 1,
 									false => 0,
 								},
 								Err(_) => 0,
-					}));
-					*/
+							}
+						)
+						.sum::<usize>() { // 2 = maintain, 3 = alive, else dead
+							2 => self.data[current_pos],
+							3 => true,
+							_ => false,
+						};
+
+					//println!("{},{} => {}", xi, yi, next[current_pos]);
+					current_pos += 1;
 				}
 			}
-			unimplemented!();
+
+			self.data = next;
 		}
 	}
 
